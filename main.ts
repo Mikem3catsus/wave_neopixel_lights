@@ -1,4 +1,7 @@
-let strip = neopixel.create(DigitalPin.P0, 60, NeoPixelMode.RGB)
+let num_pixels = 150
+let mode = 0
+let num_modes = 2
+let strip = neopixel.create(DigitalPin.P0, num_pixels, NeoPixelMode.RGB)
 let min = 1
 let max = 360
 
@@ -15,16 +18,16 @@ class Wave {
         this.speed_index = speed_index
         this.width = width 
         this.magnitude = magnitude 
-        this.cycle_count = 0
+        this.cycle_count = num_pixels // start high so we can move waves backwards
         this.speed_count = 0
     }
 
     strength(index:number):number {
-        return 0 //(index + this.cycle_count) % this.display_length
+        return 0 
     }
 
     hue_shift(index:number):number {
-        return 0 //(index + this.cycle_count) % this.display_length
+        return 0 
     }
 
     move(): void{
@@ -53,20 +56,28 @@ class Wave_1 extends Wave {
 
 class Wave_2 extends Wave {
     hue_shift(index:number):number{
-        let real_index = (index+this.cycle_count) % this.display_length
-        return (real_index%this.width)*2;
+        let real_index = (index+this.cycle_count) % this.width
+        if (real_index <(this.width/2)){
+            return real_index * this.magnitude;
+        } else {
+            return (this.width -real_index) * this.magnitude
+        }
     }
 }
 
 class Wave_3 extends Wave {
     hue_shift(index:number):number{
-        let real_index = (this.cycle_count - index) % this.display_length
-        return(real_index %this.width) *2
+         let real_index = (this.cycle_count-index) % this.width
+        if (real_index <(this.width/2)){
+            return real_index * this.magnitude;
+        } else {
+            return (this.width- (real_index)) * this.magnitude
+        }
     }
 }
 function show_leds(display_length:number, waves:Wave[]):void {
     for (let index=0; index<display_length; index++){
-        let strength = 2
+        let strength = 4
         let hue = 240
         for (let wave_index=0;wave_index<waves.length;wave_index++){
             let new_strength = waves[wave_index].strength(index)
@@ -84,10 +95,23 @@ function move_waves(waves:Wave[]): void {
     }
 }
 
-let waves = [new Wave_1(120,1,30,2), new Wave_1(150,2,40,2), new Wave_1(500,3,45,1),new Wave_2(70,5,11,2), new Wave_3(110,4,9,2)]
+let waves = [new Wave_1(120,1,30,1.5), new Wave_1(150,2,40,1.2), new Wave_1(500,3,50,1),new Wave_2(70,5,11,-2), new Wave_3(110,4,9,-2)]
+let rainbow_hue = 0
 
 basic.forever(function () {
-    show_leds(60, waves)
-    move_waves(waves)
+    switch(mode) {
+    case 0:
+        show_leds(num_pixels, waves)
+        move_waves(waves)
+        break;
+    case 1:
+        strip.showRainbow(rainbow_hue, (rainbow_hue+359)%360)
+        rainbow_hue = (rainbow_hue + 1)%360
+        break;
+    }
+})
+
+input.onButtonPressed(Button.A, function () {
+    mode = (mode + 1) % num_modes
 })
 
