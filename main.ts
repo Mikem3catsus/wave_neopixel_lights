@@ -4,7 +4,10 @@ let num_modes = 2
 let strip = neopixel.create(DigitalPin.P0, num_pixels, NeoPixelMode.RGB)
 let min = 1
 let max = 360
-
+radio.setGroup(7)
+radio.onReceivedValue(function (name: string, value: number) {
+  mode=value % num_modes  
+})
 class Wave {
     cycle_count: number
     speed_index: number
@@ -95,7 +98,14 @@ function move_waves(waves:Wave[]): void {
     }
 }
 
-let waves = [new Wave_1(120,1,30,1.5), new Wave_1(150,2,40,1.2), new Wave_1(500,3,50,1),new Wave_2(70,5,11,-2), new Wave_3(110,4,9,-2)]
+let waves = [
+    new Wave_1(120,1,30,1.5), 
+    new Wave_1(150,2,40,1.2), 
+    new Wave_1(500,3,50,1),
+    new Wave_2(70,5,11,-2), 
+    new Wave_3(110,4,9,-2)
+]
+
 let rainbow_hue = 0
 
 basic.forever(function () {
@@ -113,5 +123,6 @@ basic.forever(function () {
 
 input.onButtonPressed(Button.A, function () {
     mode = (mode + 1) % num_modes
+    radio.sendValue("mode", mode)
 })
 

@@ -4,7 +4,9 @@
     "dependencies": {
         "core": "*",
         "microphone": "*",
-        "neopixel": "github:microsoft/pxt-neopixel#v0.7.3"
+        "neopixel": "github:microsoft/pxt-neopixel#v0.7.3",
+        "radio-broadcast": "*",
+        "radio": "*"
     },
     "files": [
         "main.blocks",
