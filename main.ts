@@ -1,6 +1,6 @@
 let num_pixels = 150
 let mode = 0
-let num_modes = 3
+let num_modes = 4
 let strip = neopixel.create(DigitalPin.P0, num_pixels, NeoPixelMode.RGB)
 let min = 1
 let max = 360
@@ -144,6 +144,10 @@ basic.forever(function () {
         show_fire_leds(num_pixels, fire_waves)
         move_waves(fire_waves)
         break
+    case 3:
+        strip.setPixelColor(0, neopixel.hsl(270, 255, input.soundLevel()+3))
+        strip.shift()
+        strip.show()
     }
 })
 
