@@ -6,7 +6,7 @@ let min = 1
 let max = 360
 radio.setGroup(7)
 radio.onReceivedValue(function (name: string, value: number) {
-  mode=value % num_modes  
+    set_mode(value)  
 })
 class Wave {
     cycle_count: number
@@ -152,7 +152,20 @@ basic.forever(function () {
 })
 
 input.onButtonPressed(Button.A, function () {
-    mode = (mode + 1) % num_modes
-    radio.sendValue("mode", mode)
+    set_mode(mode+1)
 })
 
+let mode_strings = [
+    "Waves",
+    "Rainbow",
+    "Fire",
+    "Volume",
+]
+
+function set_mode(new_mode:number){
+    if (mode != new_mode) {
+        mode = (new_mode) % num_modes
+        radio.sendValue("mode", mode)
+        basic.showString(mode_strings[mode])
+    }
+}
