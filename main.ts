@@ -1,6 +1,6 @@
 let num_pixels = 150
 let mode = 0
-let num_modes = 4
+let num_modes = 5
 let strip = neopixel.create(DigitalPin.P0, num_pixels, NeoPixelMode.RGB)
 let min = 1
 let max = 360
@@ -33,10 +33,10 @@ class Wave {
         return 0 
     }
 
-    move(): void{
+    move(direction: number): void{
         this.speed_count++
         if (this.speed_count >= this.speed_index) {       
-            this.cycle_count += 1
+            this.cycle_count += direction
             this.speed_count = 0       
         }
     }
@@ -95,7 +95,7 @@ function show_leds(display_length:number, waves:Wave[]):void {
 
 function move_waves(waves:Wave[]): void {
     for (let wave_index=0;wave_index<waves.length;wave_index++){
-        waves[wave_index].move()
+        waves[wave_index].move(1)
     }
 }
 
@@ -129,6 +129,70 @@ let fire_waves = [
     new Wave_1(500,3,50,1),
 ]
 
+let grass_wind = 0
+
+class GrassWave extends Wave {
+    strength(index:number):number{
+        let real_index = (index + this.cycle_count)% this.width+5
+        let scale = 4 * this.magnitude
+
+
+
+        if (real_index <=(this.width/2)){
+            return real_index * scale
+        }
+        else if (real_index < this.width){
+            return (this.width - (real_index)) * scale
+        } else{
+            return 0
+        }
+    }
+}
+let grass_waves = [
+    new GrassWave(150, 2, 40, 1.5),
+]
+
+function show_grass_leds(display_length:number, waves:Wave[]):void {
+    for (let index=0; index<display_length; index++){
+        let strength = 4
+        let hue = 135
+        for (let wave_index=0;wave_index<waves.length;wave_index++){
+            let new_strength = waves[wave_index].strength(index)
+            strength = Math.max(strength, new_strength)
+            //hue = hue + waves[wave_index].hue_shift(index)
+        }
+        strip.setPixelColor(index, neopixel.hsl(hue,255, strength ))
+    }
+    strip.show()
+}
+function move_grass(wind:number, waves:Wave[]): number {
+    let direction = 0
+    let wind_minimum = 20
+    if(wind >wind_minimum*2) {
+        direction = 2
+        wind = wind -1
+    } else if (wind >0) {
+        direction = 1
+        wind = wind -1
+    } else if (wind == 0) {
+        direction = 1
+        while (Math.abs(wind)<wind_minimum) {
+             wind = randint(-2*wind_minimum, 2*wind_minimum)
+        }
+    } else if (wind > -wind_minimum*2 ) {
+        direction = -1
+        wind = wind +1
+    } else {
+        direction = -2
+        wind = wind +1
+    }
+    for (let wave_index=0;wave_index<waves.length;wave_index++){
+        waves[wave_index].move(direction)
+    }
+    return wind
+}
+
+
 basic.forever(function () {
     switch(mode) {
     case 0:
@@ -148,6 +212,12 @@ basic.forever(function () {
         strip.setPixelColor(0, neopixel.hsl(270, 255, input.soundLevel()+3))
         strip.shift()
         strip.show()
+        break
+    case 4:
+        show_grass_leds(num_pixels, grass_waves)
+        strip.show()
+        grass_wind = move_grass(grass_wind, grass_waves)
+        break
     }
 })
 
@@ -160,12 +230,13 @@ let mode_strings = [
     "Rainbow",
     "Fire",
     "Volume",
+    "Grass",
 ]
 
 function set_mode(new_mode:number){
     if (mode != new_mode) {
         mode = (new_mode) % num_modes
         radio.sendValue("mode", mode)
-        basic.showString(mode_strings[mode])
+        //basic.showString(mode_strings[mode])
     }
 }
