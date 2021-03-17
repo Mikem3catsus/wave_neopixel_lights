@@ -15,14 +15,16 @@ class Wave {
     display_length: number
     width:number
     magnitude:number
+    wind:number
     
     constructor(display_length:number, speed_index:number, width:number, magnitude:number){
         this.display_length = display_length
         this.speed_index = speed_index
         this.width = width 
         this.magnitude = magnitude 
-        this.cycle_count = num_pixels // start high so we can move waves backwards
+        this.cycle_count = num_pixels * 100 // start high so we can move waves backwards
         this.speed_count = 0
+        this.wind = 0
     }
 
     strength(index:number):number {
@@ -70,7 +72,7 @@ class Wave_2 extends Wave {
 
 class Wave_3 extends Wave {
     hue_shift(index:number):number{
-         let real_index = (this.cycle_count-index) % this.width
+        let real_index = (this.cycle_count-index) % this.width
         if (real_index <(this.width/2)){
             return real_index * this.magnitude;
         } else {
@@ -129,14 +131,11 @@ let fire_waves = [
     new Wave_1(500,3,50,1),
 ]
 
-let grass_wind = 0
-
 class GrassWave extends Wave {
+
     strength(index:number):number{
-        let real_index = (index + this.cycle_count)% this.width+5
+        let real_index = (index + this.cycle_count)% (this.width+20)
         let scale = 4 * this.magnitude
-
-
 
         if (real_index <=(this.width/2)){
             return real_index * scale
@@ -147,9 +146,35 @@ class GrassWave extends Wave {
             return 0
         }
     }
+
+    move(direction:number) {
+    //let direction = 0
+    let wind_minimum = 20
+    if(this.wind >wind_minimum*2) {
+        direction = 2
+        this.wind += -1
+    } else if (this.wind >0) {
+        direction = 1
+        this.wind += -1
+    } else if (this.wind == 0) {
+        direction = 1
+        while (Math.abs(this.wind)<wind_minimum) {
+             this.wind = randint(-2*wind_minimum, 2*wind_minimum)
+        }
+    } else if (this.wind > -wind_minimum*2 ) {
+        direction = -1
+        this.wind += 1
+    } else {
+        direction = -2
+        this.wind += 1
+    }
+    this.cycle_count += direction 
+}
+
 }
 let grass_waves = [
-    new GrassWave(150, 2, 40, 1.5),
+    new GrassWave(150, 2, 40, 1.2),
+    new GrassWave(150, 2, 55, 1.2),
 ]
 
 function show_grass_leds(display_length:number, waves:Wave[]):void {
@@ -165,33 +190,6 @@ function show_grass_leds(display_length:number, waves:Wave[]):void {
     }
     strip.show()
 }
-function move_grass(wind:number, waves:Wave[]): number {
-    let direction = 0
-    let wind_minimum = 20
-    if(wind >wind_minimum*2) {
-        direction = 2
-        wind = wind -1
-    } else if (wind >0) {
-        direction = 1
-        wind = wind -1
-    } else if (wind == 0) {
-        direction = 1
-        while (Math.abs(wind)<wind_minimum) {
-             wind = randint(-2*wind_minimum, 2*wind_minimum)
-        }
-    } else if (wind > -wind_minimum*2 ) {
-        direction = -1
-        wind = wind +1
-    } else {
-        direction = -2
-        wind = wind +1
-    }
-    for (let wave_index=0;wave_index<waves.length;wave_index++){
-        waves[wave_index].move(direction)
-    }
-    return wind
-}
-
 
 basic.forever(function () {
     switch(mode) {
@@ -216,7 +214,8 @@ basic.forever(function () {
     case 4:
         show_grass_leds(num_pixels, grass_waves)
         strip.show()
-        grass_wind = move_grass(grass_wind, grass_waves)
+        move_waves(grass_waves)
+        //grass_wind = move_grass(grass_wind, grass_waves)
         break
     }
 })
